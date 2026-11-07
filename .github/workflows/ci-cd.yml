@@ -68,6 +68,11 @@ jobs:
           cleaner=$(docker run -d "${options[@]}" everbright-drive:ci python manage.py cleanup --loop)
           printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/smoke.py --url http://localhost:8791
           printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/expiry_smoke.py --url http://localhost:8791 --data-dir /data --container "$container"
+          logs=$(docker logs "$container" 2>&1)
+          if grep -E '\[ERROR\]|Traceback' <<< "$logs"; then
+            echo 'Production container emitted runtime errors' >&2
+            exit 1
+          fi
           bash -n ci/deploy.sh ci/rollback.sh
 
   deploy:
