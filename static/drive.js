@@ -70,8 +70,9 @@
       row.append(title, cell(new Date(file.created_at).toLocaleDateString("it-IT", { day: "numeric", month: "short" }), "date-column"), cell(drive.formatBytes(file.size), "size-cell"));
       if (anonymous) {
         const remaining = Math.max(0, new Date(file.expires_at) - Date.now());
-        const hours = Math.floor(remaining / 3600000);
-        const minutes = Math.ceil((remaining % 3600000) / 60000);
+        const totalMinutes = Math.ceil(remaining / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
         row.append(cell(remaining ? `${hours}h ${minutes}m` : "Scaduto", "expiry-cell"));
       }
       const actions = cell("", "file-actions");
@@ -105,6 +106,7 @@
   async function remove(file, saved) {
     const dialog = document.getElementById("delete-dialog");
     document.getElementById("delete-name").textContent = file.name;
+    dialog.returnValue = "cancel";
     dialog.showModal();
     dialog.addEventListener("close", async () => {
       if (dialog.returnValue !== "delete") return;
