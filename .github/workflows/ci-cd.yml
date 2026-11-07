@@ -60,10 +60,11 @@ jobs:
           }
           trap cleanup EXIT
           options=(--cap-drop ALL --security-opt no-new-privileges:true --read-only --tmpfs /tmp -e DJANGO_SECRET_KEY -e DRIVE_INSECURE_LOCAL=1 -e DRIVE_ALLOWED_HOSTS=localhost -e DRIVE_QUOTA_BYTES=67108864 -e DRIVE_ANONYMOUS_TTL_SECONDS=60 -v "$volume:/data")
+          # Keep tmpfs mounted across one-off migration and bootstrap containers.
+          container=$(docker run -d "${options[@]}" -p 127.0.0.1:8791:8000 everbright-drive:ci)
           docker run --rm "${options[@]}" everbright-drive:ci python manage.py migrate --noinput
           docker run --rm "${options[@]}" everbright-drive:ci python manage.py check
           printf '%s\n' "$TEST_OWNER_PASSWORD" | docker run --rm -i "${options[@]}" everbright-drive:ci python manage.py bootstrap_owner
-          container=$(docker run -d "${options[@]}" -p 127.0.0.1:8791:8000 everbright-drive:ci)
           cleaner=$(docker run -d "${options[@]}" everbright-drive:ci python manage.py cleanup --loop)
           printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/smoke.py --url http://localhost:8791
           printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/expiry_smoke.py --url http://localhost:8791 --data-dir /data --container "$container"

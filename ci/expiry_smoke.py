@@ -6,7 +6,7 @@ import subprocess
 import time
 import urllib.parse
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from smoke import Browser
 
@@ -46,7 +46,8 @@ def run(base, data_dir, password, container=None):
             if anonymous:
                 shared = file
                 deadline = datetime.fromisoformat(file["expires_at"])
-                path = Path(data_dir) / "files" / "anonymous" / f"{file['id']}.{int(deadline.timestamp())}"
+                root = PurePosixPath(data_dir) if container else Path(data_dir)
+                path = root / "files" / "anonymous" / f"{file['id']}.{int(deadline.timestamp())}"
                 assert exists(path), path
             else:
                 private = file

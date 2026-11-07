@@ -43,5 +43,5 @@ Supply the owner password through stdin, never a committed file. `DRIVE_QUOTA_BY
 
 ## Traps
 
-- GitHub-hosted runners can have less than 20 GB free. Container integration tests use a shared 24 GiB sparse tmpfs fixture and a 64 MiB application quota. Only test payload bytes allocate memory. The production reserve check remains active in the tests.
+- GitHub-hosted runners can have less than 20 GB free. Container integration tests use a shared 24 GiB sparse tmpfs fixture and a 64 MiB application quota. Only test payload bytes allocate memory. The application container keeps tmpfs mounted across migration and bootstrap containers; unmounting the last consumer discards tmpfs contents. The production reserve check remains active in the tests.
 - Same-origin form submissions require `Referrer-Policy: same-origin`. Do not enable `no-referrer` globally or whitelist `Origin: null` to bypass CSRF checks.
