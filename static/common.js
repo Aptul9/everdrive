@@ -42,7 +42,7 @@ window.drive = {
       });
       return value;
     } catch {
-      document.querySelectorAll("[data-capacity]").forEach(node => { node.textContent = "Spazio Drive non disponibile"; });
+      document.querySelectorAll("[data-capacity]").forEach(node => { node.textContent = "Spazio EverDrive non disponibile"; });
     }
   },
 };

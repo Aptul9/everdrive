@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#080c10">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <title>{% block title %}Drive Everbright{% endblock %}</title>
+  <title>{% block title %}EverDrive{% endblock %}</title>
   <link rel="icon" href="/static/icon.png" type="image/png">
   <link rel="stylesheet" href="/static/drive.css">
   <script src="/static/common.js" defer></script>
@@ -28,11 +28,11 @@
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H4v16h5M10 12h11m-4-4 4 4-4 4"/></symbol>
   </svg>
   <header class="topbar">
-    <a class="brand" href="{% if request.user.is_authenticated %}/{% else %}/login/{% endif %}" aria-label="Drive Everbright">
+    <a class="brand" href="{% if request.user.is_authenticated %}/{% else %}/login/{% endif %}" aria-label="EverDrive">
       <img src="/static/logo-icon.png" alt="" width="34" height="34">
-      <span><b>EVERBRIGHT</b><small>DRIVE</small></span>
+      <span><b>EVERDRIVE</b><small>EVERBRIGHT</small></span>
     </a>
-    <div class="capacity-top" data-testid="storage-available" role="status" aria-live="polite"><span class="status-dot"></span><span data-capacity>Calcolo spazio Drive…</span></div>
+    <div class="capacity-top" data-testid="storage-available" role="status" aria-live="polite"><span class="status-dot"></span><span data-capacity>Calcolo spazio EverDrive…</span></div>
     <div class="top-actions">
       <a class="quiet-link services-link" href="https://servizi.everbright.it" target="_blank" rel="noopener noreferrer">Servizi</a>
       {% if request.user.is_authenticated %}

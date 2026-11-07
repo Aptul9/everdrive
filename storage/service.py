@@ -104,7 +104,7 @@ def start_upload(name, size, anonymous):
         stats = storage_stats()
         allocation = allocated_bytes(size)
         if allocation > stats["available_bytes"]:
-            raise DriveError("Spazio Drive insufficiente. Caricamento non avviato.", 507)
+            raise DriveError("Spazio EverDrive insufficiente. Caricamento non avviato.", 507)
         if StoredFile.objects.count() >= settings.MAX_FILES:
             raise DriveError("Limite del numero di file raggiunto.", 507)
         file = StoredFile.objects.create(
@@ -135,7 +135,7 @@ def append_chunk(file_id, token, offset, data, digest):
         if file.received + len(data) > file.size:
             raise DriveError("La dimensione dichiarata è stata superata.", 413)
         if disk_free() - len(data) < settings.RESERVE_BYTES + settings.HEADROOM_BYTES:
-            raise DriveError("Spazio Drive insufficiente. Caricamento interrotto.", 507)
+            raise DriveError("Spazio EverDrive insufficiente. Caricamento interrotto.", 507)
         path = path_for(file)
         before = file.received
         try:
@@ -168,7 +168,7 @@ def finish_upload(file_id, token):
         path = path_for(file)
         if file.size == 0:
             if disk_free() < settings.RESERVE_BYTES + settings.HEADROOM_BYTES:
-                raise DriveError("Spazio Drive insufficiente.", 507)
+                raise DriveError("Spazio EverDrive insufficiente.", 507)
             path.touch(exist_ok=True)
         if not path.exists() or path.stat().st_size != file.size:
             raise DriveError("File incompleto sul disco.", 409)
