@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Accedi · Drive Everbright{% endblock %}
+{% block content %}
+<main class="entry-layout">
+  <section class="entry-intro">
+    <div class="eyebrow">IL TUO SPAZIO, OVUNQUE</div>
+    <h1>Tutto al<br>posto <em>giusto.</em></h1>
+    <p>I tuoi file, sempre a portata di mano.<br>Le condivisioni, solo per il tempo che serve.</p>
+    <div class="intro-features"><span><svg><use href="#i-lock"/></svg>File personali privati</span><span><svg><use href="#i-clock"/></svg>Condivisioni fino a 48 ore</span></div>
+    <div class="orb" aria-hidden="true"><svg><use href="#i-drive"/></svg></div>
+  </section>
+  <section class="entry-card" aria-labelledby="login-title">
+    <div class="small-icon"><svg><use href="#i-drive"/></svg></div>
+    <h2 id="login-title">Accedi al tuo Drive</h2>
+    <p class="muted">Il tuo archivio personale Everbright.</p>
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <label>Email<input name="email" type="email" autocomplete="username" required maxlength="254" placeholder="La tua email" data-testid="login-email"></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required maxlength="256" placeholder="La tua password" data-testid="login-password"></label>
+      {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+      <button class="primary full" type="submit" data-testid="login-submit">Accedi <span aria-hidden="true">↗</span></button>
+    </form>
+    <div class="separator"><span>Devi solo inviare un file?</span></div>
+    <a class="secondary full" href="/anonymous/" data-testid="anonymous-entry"><svg><use href="#i-link"/></svg>Condividi senza account</a>
+    <p class="fine-print">Nessun login richiesto. File eliminati automaticamente entro 48 ore.</p>
+  </section>
+</main>
+<footer class="entry-footer">Everbright IT Services <span>Il tuo spazio personale.</span></footer>
+{% endblock %}

@@ -1,0 +1,72 @@
+name: everbright-drive
+
+x-app: &app
+  image: everbright-drive:${RELEASE:-local}
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY required}
+    DRIVE_ALLOWED_HOSTS: drive.everbright.it,localhost
+    DRIVE_DATA_DIR: /data
+    DRIVE_RESERVE_BYTES: "20000000000"
+  volumes:
+    - ${DRIVE_DATA_DIR:-/opt/everbright-drive/data}:/data
+  read_only: true
+  tmpfs:
+    - /tmp:size=67108864,mode=1777
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  mem_limit: 512m
+  pids_limit: 100
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "2"
+
+services:
+  app:
+    <<: *app
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8000/healthz/', headers={'X-Forwarded-Proto':'https'}), timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 4
+      start_period: 15s
+  cleanup:
+    <<: *app
+    command: [python, manage.py, cleanup, --loop]
+  web:
+    image: everbright-drive-web:${RELEASE:-local}
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    environment:
+      DOMAIN: drive.everbright.it
+    ports:
+      - 127.0.0.1:4447:8443
+    volumes:
+      - certificates:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=33554432,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    mem_limit: 256m
+    pids_limit: 100
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "2"
+
+volumes:
+  certificates:
+  caddy_config:

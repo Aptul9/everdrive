@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block scripts %}<script src="/static/drive.js" defer></script>{% endblock %}
+{% block body_attrs %}data-anonymous="{{ anonymous_mode|yesno:'true,false' }}"{% endblock %}
+{% block content %}
+<div class="workspace">
+  <aside class="sidebar">
+    <button class="new-button" data-upload-trigger><svg><use href="#i-plus"/></svg>Carica file</button>
+    <nav aria-label="Sezioni Drive">
+      {% if request.user.is_authenticated %}<a href="/" class="nav-item {% if not anonymous_mode %}active{% endif %}"><svg><use href="#i-drive"/></svg>Il mio Drive</a>{% endif %}
+      <a href="/anonymous/" class="nav-item {% if anonymous_mode %}active{% endif %}"><svg><use href="#i-clock"/></svg>Condivisioni 48h</a>
+      {% if not request.user.is_authenticated %}<a href="/login/" class="nav-item"><svg><use href="#i-lock"/></svg>Accedi al tuo Drive</a>{% endif %}
+    </nav>
+    <div class="sidebar-note"><svg><use href="{% if anonymous_mode %}#i-clock{% else %}#i-lock{% endif %}"/></svg><p>{% if anonymous_mode %}Un link, nessun account.<br>Fino a 48 ore, poi il file<br>si elimina da solo.{% else %}Solo tu puoi accedere<br>ai tuoi file personali.{% endif %}</p></div>
+    <div class="storage-card">
+      <div class="storage-heading"><svg><use href="#i-storage"/></svg>Spazio Drive</div>
+      <progress data-storage-progress max="100" value="0" aria-label="Spazio Drive utilizzato"></progress>
+      <strong data-capacity>Calcolo spazio…</strong>
+      <small data-storage-used>Spazio condiviso tra archivio e condivisioni</small>
+    </div>
+  </aside>
+  <main class="file-panel">
+    <div class="panel-top">
+      <div class="search"><svg><use href="#i-search"/></svg><input type="search" placeholder="Cerca nei file" aria-label="Cerca nei file" data-testid="file-search"></div>
+      <span class="mode-label">{% if anonymous_mode %}LINK TEMPORANEI{% else %}ARCHIVIO PERSONALE{% endif %}</span>
+    </div>
+    <div class="page-heading"><div><h1>{% if anonymous_mode %}Condivisioni <em>48h</em>{% else %}Il mio Drive{% endif %}</h1><p>{% if anonymous_mode %}Invia un file. Condividi il link. Al resto pensiamo noi.{% else %}I tuoi file, nel tuo spazio.{% endif %}</p></div><button class="primary compact" data-upload-trigger><svg><use href="#i-upload"/></svg>Carica file</button></div>
+    {% if anonymous_mode %}<div class="info-banner"><svg><use href="#i-clock"/></svg><p>Chiunque abbia il link può scaricare. I file vengono eliminati automaticamente entro <strong>48 ore</strong>.{% if not request.user.is_authenticated %} Qui vedi solo i file caricati da questo browser.{% endif %}</p></div>{% endif %}
+    <section class="dropzone" data-testid="dropzone" aria-label="Caricamento file">
+      <div class="upload-symbol"><svg><use href="#i-upload"/></svg></div>
+      <div><h2>Trascina qui i tuoi file</h2><p>oppure <button class="text-button" data-upload-trigger>scegli dal dispositivo</button></p></div>
+      <span class="dropzone-tag">{% if anonymous_mode %}Senza login · max 48 ore{% else %}Privato · nessuna scadenza{% endif %}</span>
+      <input id="file-input" data-testid="file-input" type="file" multiple aria-label="Scegli file da caricare" class="visually-hidden">
+    </section>
+    <section id="upload-progress" class="upload-progress" aria-live="polite" hidden>
+      <div><strong id="upload-name">Caricamento</strong><span id="upload-percent">0%</span></div>
+      <progress id="upload-bar" max="100" value="0" aria-label="Avanzamento caricamento"></progress>
+      <button id="cancel-upload" class="text-button">Annulla caricamento</button>
+    </section>
+    <section id="share-result" class="share-result" aria-live="polite" hidden>
+      <div><svg><use href="#i-link"/></svg><strong>Il tuo link è pronto</strong><span>Condividilo prima della scadenza.</span></div>
+      <label class="visually-hidden" for="share-link">Link di condivisione</label><input id="share-link" readonly data-testid="share-link">
+      <button id="select-share-link" class="secondary">Seleziona link</button><a id="open-share-link" class="primary" target="_blank" rel="noopener noreferrer">Apri link</a>
+    </section>
+    <div class="list-heading"><h2>{% if anonymous_mode %}File temporanei{% else %}Tutti i file{% endif %} <span id="file-count">0</span></h2><button id="refresh-files" class="text-button">Aggiorna</button></div>
+    <div class="file-table-wrap"><table class="file-table"><thead><tr><th>Nome</th><th class="date-column">Caricato</th><th>Dimensione</th>{% if anonymous_mode %}<th>Scadenza</th>{% endif %}<th><span class="visually-hidden">Azioni</span></th></tr></thead><tbody id="file-list" data-testid="file-list"></tbody></table></div>
+    <div id="empty-state" class="empty-state" hidden><div class="empty-icon"><svg><use href="#i-file"/></svg></div><h3>Il prossimo file parte da qui.</h3><p>{% if anonymous_mode %}Carica un file per creare il tuo primo link temporaneo.{% else %}Carica il tuo primo file. Lo ritroverai qui al prossimo accesso.{% endif %}</p></div>
+    <p id="list-status" class="list-status" role="status">Caricamento elenco…</p>
+    <footer class="panel-footer"><span>EVERBRIGHT <b>DRIVE</b></span><span>{% if anonymous_mode %}Condivisioni temporanee{% else %}Il tuo archivio personale{% endif %}</span></footer>
+  </main>
+</div>
+<dialog id="delete-dialog"><form method="dialog"><div class="small-icon danger-icon"><svg><use href="#i-trash"/></svg></div><h2>Eliminare il file?</h2><p id="delete-name"></p><p class="muted">Il file verrà eliminato definitivamente.</p><div class="dialog-actions"><button value="cancel" class="secondary">Annulla</button><button id="confirm-delete" value="delete" class="danger">Elimina</button></div></form></dialog>
+{% endblock %}
