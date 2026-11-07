@@ -25,7 +25,7 @@ def run(base, data_dir, password, container=None):
     owner.page("/login/")
     form = urllib.parse.urlencode({"email": "aptul4ever@gmail.com", "password": password, "csrfmiddlewaretoken": owner.csrf}).encode()
     status, page = owner.request("/login/", form, {"Content-Type": "application/x-www-form-urlencoded"})
-    assert status == 200 and b"Il mio Drive" in page
+    assert status == 200 and b"Il mio EverDrive" in page
     owner.page("/")
     guest.page("/anonymous/")
     records = []

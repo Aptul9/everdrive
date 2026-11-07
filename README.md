@@ -1,4 +1,4 @@
-# Everbright Drive
+# EverDrive
 
 Personal file storage at `https://drive.everbright.it`. One owner account, `aptul4ever@gmail.com`. No registration, invitations or account-management interface.
 
