@@ -108,7 +108,7 @@ jobs:
           ssh "$TARGET" 'install -d -m 700 /opt/everbright-drive'
           scp release.tar.gz environment.new owner-password.new "$TARGET:/opt/everbright-drive/"
       - name: Deploy from versioned script
-        run: ssh "$TARGET" "tar xOf /opt/everbright-drive/release.tar.gz ci/deploy.sh | bash -s -- '$GITHUB_SHA'"
+        run: ssh "$TARGET" "set -e; tar xzf /opt/everbright-drive/release.tar.gz -C /opt/everbright-drive ci/deploy.sh; bash /opt/everbright-drive/ci/deploy.sh '$GITHUB_SHA'"
       - name: Public application checks
         run: |
           curl --fail --silent --show-error https://drive.everbright.it/healthz/ | grep -q '"status": "ok"'
