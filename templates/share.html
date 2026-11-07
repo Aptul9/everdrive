@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{% if file %}{{ file.name }} · {% endif %}Drive Everbright{% endblock %}
+{% block scripts %}<script src="/static/share.js" defer></script>{% endblock %}
+{% block content %}
+<main class="share-layout"><section class="entry-card download-card">
+  <div class="small-icon"><svg><use href="{% if missing %}#i-clock{% else %}#i-file{% endif %}"/></svg></div>
+  {% if missing %}<div class="eyebrow">LINK NON DISPONIBILE</div><h1>Questo file non è più qui.</h1><p class="muted">La condivisione è scaduta, il file è stato eliminato oppure il link non è valido.</p><a href="/anonymous/" class="primary full">Condividi un altro file</a>
+  {% else %}<div class="eyebrow">CONDIVISO CON TE</div><h1 class="download-filename">{{ file.name }}</h1><p class="muted">{{ file.size|filesizeformat }} · Nessun account richiesto</p>
+  <a class="primary full download-button" href="/s/{{ file.share_token }}/download/" data-testid="public-download"><svg><use href="#i-download"/></svg>Scarica file</a>
+  <div class="expiry-note" data-expires="{{ file.expires_at|date:'c' }}"><svg><use href="#i-clock"/></svg><span>Disponibile fino al {{ file.expires_at|date:'d/m/Y H:i' }}</span></div>
+  <p class="fine-print">Questo file viene eliminato automaticamente entro 48 ore dal caricamento. Scarica solo file che provengono da persone di cui ti fidi.</p>
+  <a class="quiet-link" href="/anonymous/">Condividi anche tu un file</a>{% endif %}
+</section></main>
+{% endblock %}
