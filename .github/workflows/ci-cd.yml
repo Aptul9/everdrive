@@ -48,17 +48,25 @@ jobs:
           docker build -f Dockerfile.caddy -t everbright-drive-web:ci .
           docker run --rm -e DOMAIN=drive.example.com everbright-drive-web:ci caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           docker compose config --quiet
-          mkdir -p /tmp/drive-ci-container
-          chmod 777 /tmp/drive-ci-container
-          docker run --rm --cap-drop ALL --security-opt no-new-privileges:true --read-only --tmpfs /tmp -e DJANGO_SECRET_KEY -e DRIVE_INSECURE_LOCAL=1 -v /tmp/drive-ci-container:/data everbright-drive:ci python manage.py migrate --noinput
-          docker run --rm --cap-drop ALL --security-opt no-new-privileges:true --read-only --tmpfs /tmp -e DJANGO_SECRET_KEY -e DRIVE_INSECURE_LOCAL=1 -v /tmp/drive-ci-container:/data everbright-drive:ci python manage.py check
-          options=(--cap-drop ALL --security-opt no-new-privileges:true --read-only --tmpfs /tmp -e DJANGO_SECRET_KEY -e DRIVE_INSECURE_LOCAL=1 -e DRIVE_ALLOWED_HOSTS=localhost -e DRIVE_QUOTA_BYTES=67108864 -e DRIVE_ANONYMOUS_TTL_SECONDS=60 -v /tmp/drive-ci-container:/data)
+          # A sparse tmpfs fixture advertises enough capacity for the real 20 GB reserve.
+          # Only the test payload is allocated; production disk checks remain unchanged.
+          volume="drive-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker volume create --driver local --opt type=tmpfs --opt device=tmpfs --opt o=size=24g,uid=10001,gid=10001,mode=0700 "$volume"
+          cleanup() {
+            for item in "${container:-}" "${cleaner:-}"; do
+              if test -n "$item"; then docker rm -f "$item" >/dev/null; fi
+            done
+            docker volume rm "$volume" >/dev/null
+          }
+          trap cleanup EXIT
+          options=(--cap-drop ALL --security-opt no-new-privileges:true --read-only --tmpfs /tmp -e DJANGO_SECRET_KEY -e DRIVE_INSECURE_LOCAL=1 -e DRIVE_ALLOWED_HOSTS=localhost -e DRIVE_QUOTA_BYTES=67108864 -e DRIVE_ANONYMOUS_TTL_SECONDS=60 -v "$volume:/data")
+          docker run --rm "${options[@]}" everbright-drive:ci python manage.py migrate --noinput
+          docker run --rm "${options[@]}" everbright-drive:ci python manage.py check
           printf '%s\n' "$TEST_OWNER_PASSWORD" | docker run --rm -i "${options[@]}" everbright-drive:ci python manage.py bootstrap_owner
           container=$(docker run -d "${options[@]}" -p 127.0.0.1:8791:8000 everbright-drive:ci)
           cleaner=$(docker run -d "${options[@]}" everbright-drive:ci python manage.py cleanup --loop)
-          trap 'docker rm -f "$container" "$cleaner" >/dev/null' EXIT
           printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/smoke.py --url http://localhost:8791
-          printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/expiry_smoke.py --url http://localhost:8791 --data-dir /tmp/drive-ci-container
+          printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/expiry_smoke.py --url http://localhost:8791 --data-dir /data --container "$container"
           bash -n ci/deploy.sh ci/rollback.sh
 
   deploy:

@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import json
 import sys
+import subprocess
 import time
 import urllib.parse
 from datetime import datetime, timezone
@@ -10,7 +11,16 @@ from pathlib import Path
 from smoke import Browser
 
 
-def run(base, data_dir, password):
+def run(base, data_dir, password, container=None):
+    def exists(path):
+        if not container:
+            return path.is_file()
+        result = subprocess.run([
+            "docker", "exec", container, "python", "-c",
+            "import json,pathlib,sys; print(json.dumps(pathlib.Path(sys.argv[1]).is_file()))", str(path),
+        ], check=True, capture_output=True, text=True)
+        return json.loads(result.stdout)
+
     owner, guest = Browser(base), Browser(base)
     owner.page("/login/")
     form = urllib.parse.urlencode({"email": "aptul4ever@gmail.com", "password": password, "csrfmiddlewaretoken": owner.csrf}).encode()
@@ -37,7 +47,7 @@ def run(base, data_dir, password):
                 shared = file
                 deadline = datetime.fromisoformat(file["expires_at"])
                 path = Path(data_dir) / "files" / "anonymous" / f"{file['id']}.{int(deadline.timestamp())}"
-                assert path.is_file(), path
+                assert exists(path), path
             else:
                 private = file
         wait = (deadline - datetime.now(timezone.utc)).total_seconds() + 1
@@ -46,7 +56,7 @@ def run(base, data_dir, password):
         time.sleep(wait)
         assert guest.request(shared["download_url"])[0] == 404
         assert guest.request(shared["share_url"])[0] == 404
-        assert not path.exists(), "Anonymous content still present on disk"
+        assert not exists(path), "Anonymous content still present on disk"
         assert owner.request(private["download_url"])[0] == 200
         print("Expiry smoke: PASS; anonymous link HTTP 404, bytes removed from disk, private file retained")
     finally:
@@ -58,8 +68,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
     parser.add_argument("--data-dir", required=True)
+    parser.add_argument("--container")
     args = parser.parse_args()
     password = sys.stdin.readline().rstrip("\r\n")
     if not password:
         raise SystemExit("Password required on stdin")
-    run(args.url, args.data_dir, password)
+    run(args.url, args.data_dir, password, args.container)

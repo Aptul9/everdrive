@@ -40,3 +40,8 @@ python manage.py runserver 127.0.0.1:8791 --noreload --insecure
 ```
 
 Supply the owner password through stdin, never a committed file. `DRIVE_QUOTA_BYTES` can lower the initial quota in an isolated local environment. `DRIVE_ANONYMOUS_TTL_SECONDS` can shorten retention for tests; values greater than 48 hours are rejected. Production Compose exposes neither override.
+
+## Traps
+
+- GitHub-hosted runners can have less than 20 GB free. Container integration tests use a shared 24 GiB sparse tmpfs fixture and a 64 MiB application quota. Only test payload bytes allocate memory. The production reserve check remains active in the tests.
+- Same-origin form submissions require `Referrer-Policy: same-origin`. Do not enable `no-referrer` globally or whitelist `Origin: null` to bypass CSRF checks.
