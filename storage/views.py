@@ -1,6 +1,8 @@
 import json
+import logging
 from functools import wraps
 
+import requests
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.db import connection, transaction
@@ -13,7 +15,9 @@ from django.views.decorators.http import require_GET, require_POST
 from mozilla_django_oidc.views import OIDCAuthenticationCallbackView, OIDCAuthenticationRequestView
 
 from .models import StoredFile
-from . import service
+from . import everid, service
+
+LOGGER = logging.getLogger(__name__)
 
 
 def api(view):
@@ -106,7 +110,24 @@ def everid_login(request):
         raise Http404
     if request.user.is_authenticated:
         return redirect("home")
-    return OIDCAuthenticationRequestView.as_view()(request)
+    return EverIDRequestView.as_view()(request)
+
+
+class EverIDRequestView(OIDCAuthenticationRequestView):
+    def get(self, request):
+        try:
+            self.OIDC_OP_AUTH_ENDPOINT = everid.discovery()["authorization_endpoint"]
+        except (requests.RequestException, ValueError, KeyError) as exc:
+            LOGGER.warning("EverID discovery failed: %s", exc)
+            return redirect("/login/?everid=error")
+        return super().get(request)
+
+
+def end_session_endpoint():
+    try:
+        return everid.discovery()["end_session_endpoint"]
+    except (requests.RequestException, ValueError, KeyError):
+        return settings.OIDC_OP_LOGOUT_ENDPOINT
 
 
 @require_POST
@@ -116,9 +137,9 @@ def logout_view(request):
     if settings.OIDC_ENABLED and id_token:
         query = urlencode({
             "id_token_hint": id_token,
-            "post_logout_redirect_uri": request.build_absolute_uri("/login/"),
+            "post_logout_redirect_uri": request.build_absolute_uri("/"),
         })
-        return redirect(f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{query}")
+        return redirect(f"{end_session_endpoint()}?{query}")
     return redirect("login")
 
 
