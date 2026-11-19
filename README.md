@@ -1,8 +1,14 @@
 # EverDrive
 
-Personal file storage at `https://drive.everbright.it`. One owner account, `aptul4ever@gmail.com`. No registration, invitations or account-management interface.
+Personal file storage at `https://drive.everbright.it`. Login through EverID; every user with access sees and manages the same shared data.
 
 Authenticated uploads stay private and have no automatic expiry. Anonymous uploads produce unguessable download links, accessible without login. No public file directory exists. The owner can manage temporary files; anonymous uploaders can remove their own files from the browser that uploaded them.
+
+## Login
+
+EverID (Authentik at `id.everbright.it`) is the primary login: OIDC authorization code with PKCE, client `everdrive`, callback `/oidc/callback`, scopes `openid email profile`. Access requires group `app-drive` in the `groups` claim; other EverID users get HTTP 403 and no session. Users are matched by email (case-insensitive) or created on first login without a usable password. Logout ends the local session and redirects to the EverID end-session endpoint with `id_token_hint`. Anonymous upload and share links stay public.
+
+Password login for the seeded owner is a fallback behind `LEGACY_LOGIN` (repository variable, default `1`). With `LEGACY_LOGIN=0` password posts return HTTP 403 and existing password sessions stop being valid. Startup refuses `LEGACY_LOGIN=0` without EverID client credentials.
 
 ## Storage
 
@@ -18,7 +24,7 @@ Anonymous expiry is no later than 48 hours from upload start. Expired links are 
 
 `.github/workflows/ci-cd.yml` tests Python behavior, routing transformations and production containers. Pull requests run checks. Main deploys through SSH using `ci/deploy.sh`; no manual application copy or server-side code edits are required. The source-controlled script prepares persistent storage, migrates SQLite, creates the owner only when absent, configures the new sslh route and starts Compose.
 
-Required repository secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DJANGO_SECRET_KEY`, `OWNER_PASSWORD`. Runtime secret remains unchanged on later deploys. Existing owner password is never reset by deployment. Runtime files live outside release directories in `/opt/everbright-drive/data`; Compose publishes only `127.0.0.1:4447`.
+Required repository secrets: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DJANGO_SECRET_KEY`, `OWNER_PASSWORD`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`; variables `OIDC_ISSUER`, optional `LEGACY_LOGIN`. Deploy stops when the EverID client is missing. EverID settings are rewritten to `oidc.env` on every deploy. Runtime secret remains unchanged on later deploys. Existing owner password is never reset by deployment. Runtime files live outside release directories in `/opt/everbright-drive/data`; Compose publishes only `127.0.0.1:4447`.
 
 DNS record A `drive.everbright.it` must resolve to the VM before first deployment. Caddy obtains its certificate through TLS-ALPN via sslh. The existing services page has its own pipeline and is updated separately after Drive is reachable.
 
