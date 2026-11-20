@@ -15,11 +15,16 @@ import urllib.request
 class Browser:
     def __init__(self, base):
         self.base = base.rstrip("/")
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        self.jar = http.cookiejar.CookieJar()
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
         self.csrf = ""
+        self.session = ""
 
     def request(self, path, data=None, headers=None):
         values = {"Origin": self.base, "Referer": self.base + "/", **(headers or {})}
+        if self.session:
+            cookies = ["drive_session=" + self.session] + [f"{c.name}={c.value}" for c in self.jar]
+            values["Cookie"] = "; ".join(cookies)
         if data is not None:
             values["X-CSRFToken"] = self.csrf
         request = urllib.request.Request(self.base + path, data=data, headers=values)
@@ -42,19 +47,17 @@ class Browser:
         return body
 
 
-def run(base, password):
+def run(base, session):
     owner, guest = Browser(base), Browser(base)
+    owner.session = session
     for attempt in range(30):
         try:
-            owner.page("/login/")
+            owner.page("/")
             break
         except (OSError, AssertionError):
             if attempt == 29:
                 raise
             time.sleep(1)
-    form = urllib.parse.urlencode({"email": "aptul4ever@gmail.com", "password": password, "csrfmiddlewaretoken": owner.csrf}).encode()
-    status, page = owner.request("/login/", form, {"Content-Type": "application/x-www-form-urlencoded"})
-    assert status == 200 and b"Il mio EverDrive" in page, (status, page[:200])
     owner.page("/")
     guest.page("/anonymous/")
     made = []
@@ -109,7 +112,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
     args = parser.parse_args()
-    password = sys.stdin.readline().rstrip("\r\n")
-    if not password:
-        raise SystemExit("Password required on stdin")
-    run(args.url, password)
+    session = sys.stdin.readline().rstrip("\r\n")
+    if not session:
+        raise SystemExit("Test session required on stdin")
+    run(args.url, session)

@@ -11,7 +11,7 @@ from pathlib import Path, PurePosixPath
 from smoke import Browser
 
 
-def run(base, data_dir, password, container=None):
+def run(base, data_dir, session, container=None):
     def exists(path):
         if not container:
             return path.is_file()
@@ -22,10 +22,7 @@ def run(base, data_dir, password, container=None):
         return json.loads(result.stdout)
 
     owner, guest = Browser(base), Browser(base)
-    owner.page("/login/")
-    form = urllib.parse.urlencode({"email": "aptul4ever@gmail.com", "password": password, "csrfmiddlewaretoken": owner.csrf}).encode()
-    status, page = owner.request("/login/", form, {"Content-Type": "application/x-www-form-urlencoded"})
-    assert status == 200 and b"Il mio EverDrive" in page
+    owner.session = session
     owner.page("/")
     guest.page("/anonymous/")
     records = []
@@ -71,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--data-dir", required=True)
     parser.add_argument("--container")
     args = parser.parse_args()
-    password = sys.stdin.readline().rstrip("\r\n")
-    if not password:
-        raise SystemExit("Password required on stdin")
-    run(args.url, args.data_dir, password, args.container)
+    session = sys.stdin.readline().rstrip("\r\n")
+    if not session:
+        raise SystemExit("Test session required on stdin")
+    run(args.url, args.data_dir, session, args.container)

@@ -66,8 +66,11 @@ jobs:
           docker run --rm "${options[@]}" everbright-drive:ci python manage.py check
           printf '%s\n' "$TEST_OWNER_PASSWORD" | docker run --rm -i "${options[@]}" everbright-drive:ci python manage.py bootstrap_owner
           cleaner=$(docker run -d "${options[@]}" everbright-drive:ci python manage.py cleanup --loop)
-          printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/smoke.py --url http://localhost:8791
-          printf '%s\n' "$TEST_OWNER_PASSWORD" | python ci/expiry_smoke.py --url http://localhost:8791 --data-dir /data --container "$container"
+          session=$(docker exec "$container" python manage.py shell -c 'from django.test import Client; from django.contrib.auth import get_user_model; from django.conf import settings; c=Client(); c.force_login(get_user_model().objects.get(username=settings.OWNER_EMAIL), backend="storage.auth.EverIDBackend"); print(c.session.session_key)' | tail -1)
+          test -n "$session"
+          echo "::add-mask::$session"
+          printf '%s\n' "$session" | python ci/smoke.py --url http://localhost:8791
+          printf '%s\n' "$session" | python ci/expiry_smoke.py --url http://localhost:8791 --data-dir /data --container "$container"
           logs=$(docker logs "$container" 2>&1)
           if grep -E '\[ERROR\]|Traceback' <<< "$logs"; then
             echo 'Production container emitted runtime errors' >&2
@@ -129,7 +132,7 @@ jobs:
           curl --fail --silent --show-error https://drive.everbright.it/healthz/ | grep -q '"status": "ok"'
           curl --fail --silent --show-error https://drive.everbright.it/anonymous/ | grep -q 'Condivisioni'
           test "$(curl -s -o /dev/null -w '%{http_code}' https://drive.everbright.it/api/files/)" = 401
-          curl --fail --silent --show-error https://drive.everbright.it/login/ | grep -q 'data-testid="everid-login"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' https://drive.everbright.it/login/)" = 302
           origin=$(cut -d/ -f1-3 <<< "${{ vars.OIDC_ISSUER }}")
           location=$(curl --silent --show-error -o /dev/null -w '%{http_code} %{redirect_url}' https://drive.everbright.it/oidc/login/)
           echo "EverID start: ${location%%\?*}"
