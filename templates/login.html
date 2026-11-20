@@ -13,19 +13,8 @@
     <div class="small-icon"><svg><use href="#i-drive"/></svg></div>
     <h2 id="login-title">Accedi a EverDrive</h2>
     <p class="muted">Il tuo archivio Everbright.</p>
-    {% if everid %}
-    <a class="primary full" href="/oidc/login/" data-testid="everid-login">Accedi con EverID <span aria-hidden="true">↗</span></a>
-    {% endif %}
     {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
-    {% if legacy_login %}
-    {% if everid %}<div class="separator"><span>Oppure con email e password</span></div>{% endif %}
-    <form method="post" class="login-form">
-      {% csrf_token %}
-      <label>Email<input name="email" type="email" autocomplete="username" required maxlength="254" placeholder="La tua email" data-testid="login-email"></label>
-      <label>Password<input name="password" type="password" autocomplete="current-password" required maxlength="256" placeholder="La tua password" data-testid="login-password"></label>
-      <button class="{% if everid %}secondary{% else %}primary{% endif %} full" type="submit" data-testid="login-submit">Accedi <span aria-hidden="true">↗</span></button>
-    </form>
-    {% endif %}
+    {% if sso %}<a class="primary full" href="/oidc/login/">Accedi</a>{% endif %}
     <div class="separator"><span>Devi solo inviare un file?</span></div>
     <a class="secondary full" href="/anonymous/" data-testid="anonymous-entry"><svg><use href="#i-link"/></svg>Condividi senza account</a>
     <p class="fine-print">Nessun login richiesto. File eliminati automaticamente entro 48 ore.</p>

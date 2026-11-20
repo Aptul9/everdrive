@@ -71,6 +71,6 @@ compose logs --tail 15 app cleanup
 
 # The public check includes DNS, certificate and the actual application.
 curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --max-time 15 https://drive.everbright.it/healthz/ | grep -q '"status": "ok"'
-curl --fail --silent --show-error https://drive.everbright.it/login/ | grep -q 'Accedi a EverDrive'
+test "$(curl --silent --show-error -o /dev/null -w '%{http_code}' https://drive.everbright.it/login/)" = 302
 curl --fail --silent --show-error https://drive.everbright.it/api/storage/ | python3 -c 'import json,sys; s=json.load(sys.stdin); assert s["quota_bytes"] > 0; print("Drive capacity:", s["available_bytes"], "bytes available")'
 echo "Deployment complete: $RELEASE"
