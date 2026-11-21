@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#080c10">
   <meta name="csrf-token" content="{{ csrf_token }}">
   <title>{% block title %}EverDrive{% endblock %}</title>
-  <link rel="icon" href="/static/icon.png" type="image/png">
+  <link rel="icon" href="/static/app-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/drive.css">
   <script src="/static/common.js" defer></script>
   {% block scripts %}{% endblock %}
@@ -29,7 +29,7 @@
   </svg>
   <header class="topbar">
     <a class="brand" href="{% if request.user.is_authenticated %}/{% else %}/login/{% endif %}" aria-label="EverDrive">
-      <img src="/static/logo-icon.png" alt="" width="34" height="34">
+      <img src="/static/app-icon.svg" alt="" width="34" height="34">
       <span><b>EVERDRIVE</b><small>EVERBRIGHT</small></span>
     </a>
     <div class="capacity-top" data-testid="storage-available" role="status" aria-live="polite"><span class="status-dot"></span><span data-capacity>Calcolo spazio EverDrive…</span></div>
