@@ -14,7 +14,12 @@
     <h2 id="login-title">Accedi a EverDrive</h2>
     <p class="muted">Il tuo archivio Everbright.</p>
     {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
-    {% if sso %}<a class="primary full" href="/oidc/login/">Accedi</a>{% endif %}
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <label>Email o nome utente<input name="email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="254" placeholder="La tua email" data-testid="login-email"></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required maxlength="1024" placeholder="La tua password" data-testid="login-password"></label>
+      <button class="primary full" type="submit" data-testid="login-submit">Accedi <span aria-hidden="true">↗</span></button>
+    </form>
     <div class="separator"><span>Devi solo inviare un file?</span></div>
     <a class="secondary full" href="/anonymous/" data-testid="anonymous-entry"><svg><use href="#i-link"/></svg>Condividi senza account</a>
     <p class="fine-print">Nessun login richiesto. File eliminati automaticamente entro 48 ore.</p>
